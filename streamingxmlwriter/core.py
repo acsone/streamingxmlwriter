@@ -33,88 +33,80 @@ class StreamingXMLWriter(object):
     A pythonic, lightweight class to write XML in a pythonic
     and standard compliant way.
 
-    >>> try:
-    ...    from cStringIO import StringIO
-    ... except ImportError:
-    ...    from io import StringIO
+    >>> from io import BytesIO
     >>> from __future__ import print_function
     >>> from collections import OrderedDict
 
+    >>> def bprint(s):
+    ...     if not isinstance(s, str):
+    ...         s = s.decode()
+    ...     print(s)
+
     Example without namespace:
 
-    >>> s = StringIO()
+    >>> s = BytesIO()
     >>> with StreamingXMLWriter(s) as writer:
     ...    with writer.element("root"):
-    ...        writer.characters("\\n")
     ...        with writer.element("e", {'a': '1'}):
     ...            writer.characters("content")
-    ...            writer.characters("\\n")
     ...        with writer.element("e"):
     ...            pass
     ...        writer.processing_instruction("target", "data")
-    >>> print(s.getvalue())
+    >>> bprint(s.getvalue())
     <?xml version="1.0" encoding="utf-8"?>
-    <root>
-    <e a="1">content
-    </e><e></e><?target data?></root>
+    <root><e a="1">content</e><e></e><?target data?></root>
 
     Example with namespaces:
 
-    >>> s = StringIO()
+    >>> s = BytesIO()
     >>> with StreamingXMLWriter(s) as writer:
     ...    writer.start_namespace("myns", "http://mynamespace.org/")
     ...    with writer.element("myns:root"):
     ...        writer.characters("\\n")
     ...        with writer.element("myns:e", {'a': '1'}):
     ...            writer.characters("content")
-    ...            writer.characters("\\n")
     ...        with writer.element("myns:e"):
     ...            pass
-    >>> print(s.getvalue())
+    >>> bprint(s.getvalue())
     <?xml version="1.0" encoding="utf-8"?>
     <myns:root xmlns:myns="http://mynamespace.org/">
-    <myns:e a="1">content
-    </myns:e><myns:e></myns:e></myns:root>
+    <myns:e a="1">content</myns:e><myns:e></myns:e></myns:root>
 
     Example with default namespace (prefix=None):
 
-    >>> s = StringIO()
+    >>> s = BytesIO()
     >>> with StreamingXMLWriter(s) as writer:
     ...     writer.start_namespace(None, "http://mynamespace.org/")
     ...     with writer.element("root"):
     ...         with writer.element("e", {"a": "1"}):
     ...             pass
-    >>> print(s.getvalue())
+    >>> bprint(s.getvalue())
     <?xml version="1.0" encoding="utf-8"?>
     <root xmlns="http://mynamespace.org/"><e a="1"></e></root>
 
     Example with explicit closing (more verbose but could be useful too):
 
-    >>> s = StringIO()
+    >>> s = BytesIO()
     >>> writer = StreamingXMLWriter(s)
     >>> writer.start_element("root")
-    >>> writer.characters("\\n")
     >>> writer.start_element("e", OrderedDict([('a', '1'), ('b', '2')]))
     >>> writer.characters("content")
-    >>> writer.characters("\\n")
     >>> writer.end_element("e")
     >>> writer.start_element("e")
     >>> writer.end_element("e")
     >>> writer.end_element("root")
-    >>> print(s.getvalue())
+    >>> bprint(s.getvalue())
     <?xml version="1.0" encoding="utf-8"?>
-    <root>
-    <e a="1" b="2">content
-    </e><e></e></root>
+    <root><e a="1" b="2">content</e><e></e></root>
 
     Text element:
 
-    >>> s = StringIO()
+    >>> s = BytesIO()
     >>> writer = StreamingXMLWriter(s)
-    >>> writer.text_element('root', {'a': '1'}, 'content')
-    >>> print(s.getvalue())
+    >>> writer.text_element('root', {'a': '1'}, 'contenté')
+    >>> bprint(s.getvalue())
     <?xml version="1.0" encoding="utf-8"?>
-    <root a="1">content</root>
+    <root a="1">contenté</root>
     """
 
     def __init__(self, f, encoding='utf-8'):
