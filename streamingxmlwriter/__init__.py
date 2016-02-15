@@ -1,1 +1,1 @@
-from .core import StreamingXMLWriter
+from .core import StreamingXMLWriter  # noqa
