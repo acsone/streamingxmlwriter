@@ -26,6 +26,29 @@ from contextlib import contextmanager
 from xml.sax.saxutils import XMLGenerator
 from xml.sax.xmlreader import AttributesNSImpl
 
+import six
+
+
+__all__ = ['StreamingXMLWriter']
+
+
+class MyXMLGenerator(XMLGenerator):
+    """ XMLGenerator subclass that supports comments """
+
+    def comment(self, comment):
+        # inspired by XMLGenerator.characters()
+        if comment:
+            try:
+                self._finish_pending_start_element()
+            except AttributeError:
+                # not in all XMLGenerator implementations
+                pass
+            if isinstance(comment, six.binary_type):
+                comment = comment.decode(self._encoding)
+            self._write(u'<!--')
+            self._write(comment)
+            self._write(u'-->')
+
 
 class StreamingXMLWriter(object):
     """ Streaming XML Writer
@@ -107,11 +130,20 @@ class StreamingXMLWriter(object):
     >>> bprint(s.getvalue())
     <?xml version="1.0" encoding="utf-8"?>
     <root a="1">contenté</root>
+
+    Comment:
+    >>> s = BytesIO()
+    >>> writer = StreamingXMLWriter(s)
+    >>> with writer.element("root"):
+    ...     writer.comment("commenté")
+    >>> bprint(s.getvalue())
+    <?xml version="1.0" encoding="utf-8"?>
+    <root><!--commenté--></root>
     """
 
     def __init__(self, f, encoding='utf-8'):
         self._ns = {}  # prefix: uri
-        self._g = XMLGenerator(f, encoding)
+        self._g = MyXMLGenerator(f, encoding)
         self._g.startDocument()
 
     def close(self):
@@ -180,6 +212,9 @@ class StreamingXMLWriter(object):
 
     def processing_instruction(self, target, data):
         self._g.processingInstruction(target, data)
+
+    def comment(self, comment):
+        self._g.comment(comment)
 
 
 if __name__ == '__main__':
