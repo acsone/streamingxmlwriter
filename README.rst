@@ -9,7 +9,7 @@ streamingxmlwriter
 .. image:: https://travis-ci.org/acsone/streamingxmlwriter.svg?branch=master
    :target: https://travis-ci.org/acsone/streamingxmlwriter
 .. image:: https://coveralls.io/repos/acsone/streamingxmlwriter/badge.svg?branch=master&service=github
-   :target: https://coveralls.io/github/acsone/streamingxmlwriter?branch=master
+   :target: https://coveralls.io/repos/github/acsone/streamingxmlwriter/badge.svg?branch=master
 
 A lightweight pythonic standard compliant streaming xml writer.
 
