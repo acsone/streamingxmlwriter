@@ -13,7 +13,7 @@ streamingxmlwriter
 
 A lightweight pythonic standard compliant streaming xml writer.
 
-  ..code:: python
+  .. code:: python
 
     from io import BytesIO
 
@@ -38,19 +38,19 @@ Python 2 (2.7+) and python 3 (3.3+) are supported.
 
 Supported XML features are:
 
-* elements
-* attributes
-* text
-* processing instructions
-* comments
-* selectable encoding
-* namespaces for elements and attributes, with or without prefix
+  * elements
+  * attributes
+  * text
+  * processing instructions
+  * comments
+  * selectable encoding
+  * namespaces for elements and attributes, with or without prefix
 
 Unsupported XML features (yet):
 
-* DOCTYPE declaration
-* entities
-* CDATA sections
+  * DOCTYPE declaration
+  * entities
+  * CDATA sections
 
 Credits
 =======
