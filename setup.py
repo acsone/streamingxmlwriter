@@ -1,10 +1,18 @@
+# -*- coding: utf-8 -*-
+# © 2016 ACSONE SA/NV
+# License LGPLv3 (http://www.gnu.org/licenses/lgpl-3.0-standalone.html)
+
 from setuptools import setup
 
 setup(
     name="streamingxmlwriter",
+    version="1.0.1.dev1",
     description="A lightweight pythonic standard compliant "
                 "streaming xml writer",
-    version="1.0.0",
+    long_description='\n'.join((
+        open('README.rst').read(),
+        open('CHANGES.rst').read(),
+    )),
     packages=["streamingxmlwriter"],
     install_requires=["six"],
     classifiers=[
