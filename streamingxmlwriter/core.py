@@ -75,6 +75,22 @@ Example with default namespace (prefix=None):
 <?xml version="1.0" encoding="utf-8"?>
 <root xmlns="http://mynamespace.org/"><e a="1"></e></root>
 
+Another example with namespace change:
+
+>>> s = BytesIO()
+>>> with from_stream(s) as writer:
+...     with writer.element("root"):
+...         writer.start_namespace(None, "urn:ns1")
+...         with writer.element("e"):
+...             pass
+...         writer.end_namespace(None)
+...         writer.start_namespace(None, "urn:ns2")
+...         with writer.element("f"):
+...             pass
+>>> bprint(s.getvalue())
+<?xml version="1.0" encoding="utf-8"?>
+<root><e xmlns="urn:ns1"></e><f xmlns="urn:ns2"></f></root>
+
 Example with explicit closing (more verbose but could be useful too):
 
 >>> s = BytesIO()
@@ -245,6 +261,3 @@ def from_sax_handler(handler):
     return _StreamingXMLWriter(handler)
 
 
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
