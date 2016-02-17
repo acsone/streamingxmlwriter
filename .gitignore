@@ -1,6 +1,8 @@
 .tox
 .cache
+.coverage
 *.pyc
 *.swp
 *.egg-info
 dist
+build
