@@ -259,5 +259,3 @@ def from_stream(stream, encoding='utf-8'):
 
 def from_sax_handler(handler):
     return _StreamingXMLWriter(handler)
-
-
