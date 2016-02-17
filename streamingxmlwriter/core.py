@@ -20,6 +20,108 @@
 # License along with this python module.
 #
 #########################################################################
+""" streamingxmlwriter
+
+A lightweight pythonic standard compliant streaming xml writer.
+
+>>> from io import BytesIO
+>>> from __future__ import print_function
+>>> from collections import OrderedDict
+
+>>> def bprint(s):
+...     if not isinstance(s, str):
+...         s = s.decode()
+...     print(s)
+
+Example without namespace:
+
+>>> s = BytesIO()
+>>> with from_stream(s) as writer:
+...    with writer.element("root"):
+...        with writer.element("e", {'a': '1'}):
+...            writer.characters("content")
+...        with writer.element("e"):
+...            pass
+...        writer.processing_instruction("target", "data")
+>>> bprint(s.getvalue())
+<?xml version="1.0" encoding="utf-8"?>
+<root><e a="1">content</e><e></e><?target data?></root>
+
+Example with namespaces:
+
+>>> s = BytesIO()
+>>> with from_stream(s) as writer:
+...    writer.start_namespace("myns", "http://mynamespace.org/")
+...    with writer.element("myns:root"):
+...        writer.characters("\\n")
+...        with writer.element("myns:e", {'a': '1'}):
+...            writer.characters("content")
+...        with writer.element("myns:e"):
+...            pass
+>>> bprint(s.getvalue())
+<?xml version="1.0" encoding="utf-8"?>
+<myns:root xmlns:myns="http://mynamespace.org/">
+<myns:e a="1">content</myns:e><myns:e></myns:e></myns:root>
+
+Example with default namespace (prefix=None):
+
+>>> s = BytesIO()
+>>> with from_stream(s) as writer:
+...     writer.start_namespace(None, "http://mynamespace.org/")
+...     with writer.element("root"):
+...         with writer.element("e", {"a": "1"}):
+...             pass
+>>> bprint(s.getvalue())
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns="http://mynamespace.org/"><e a="1"></e></root>
+
+Example with explicit closing (more verbose but could be useful too):
+
+>>> s = BytesIO()
+>>> writer = from_stream(s)
+>>> writer.start_element("root")
+>>> writer.start_element("e", OrderedDict([('a', '1'), ('b', '2')]))
+>>> writer.characters("content")
+>>> writer.end_element("e")
+>>> writer.start_element("e")
+>>> writer.end_element("e")
+>>> writer.end_element("root")
+>>> writer.close()
+>>> bprint(s.getvalue())
+<?xml version="1.0" encoding="utf-8"?>
+<root><e a="1" b="2">content</e><e></e></root>
+
+Text element:
+
+>>> s = BytesIO()
+>>> writer = from_stream(s)
+>>> writer.text_element('root', 'contenté', {'a': '1'})
+>>> writer.close()
+>>> bprint(s.getvalue())
+<?xml version="1.0" encoding="utf-8"?>
+<root a="1">contenté</root>
+
+Comment:
+
+>>> s = BytesIO()
+>>> writer = from_stream(s)
+>>> with writer.element("root"):
+...     writer.comment("commenté")
+>>> writer.close()
+>>> bprint(s.getvalue())
+<?xml version="1.0" encoding="utf-8"?>
+<root><!--commenté--></root>
+
+Using the sax handler constructor:
+
+>>> s = BytesIO()
+>>> g = XMLGenerator(s, encoding="utf-8")
+>>> with from_sax_handler(g) as writer:
+...    writer.text_element("root")
+>>> bprint(s.getvalue())
+<?xml version="1.0" encoding="utf-8"?>
+<root></root>
+"""
 
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -29,11 +131,17 @@ from xml.sax.xmlreader import AttributesNSImpl
 import six
 
 
-__all__ = ['StreamingXMLWriter']
+__all__ = [
+    'from_stream',
+    'from_sax_handler',
+]
 
 
-class MyXMLGenerator(XMLGenerator):
-    """ XMLGenerator subclass that supports comments """
+class _LexicalXMLGenerator(XMLGenerator):
+    """ XMLGenerator subclass that supports comments
+
+    TODO: implement other lexical constructs.
+    """
 
     def comment(self, comment):
         # inspired by XMLGenerator.characters()
@@ -50,100 +158,11 @@ class MyXMLGenerator(XMLGenerator):
             self._write(u'-->')
 
 
-class StreamingXMLWriter(object):
-    """ Streaming XML Writer
+class _StreamingXMLWriter(object):
 
-    A pythonic, lightweight class to write XML in a pythonic
-    and standard compliant way.
-
-    >>> from io import BytesIO
-    >>> from __future__ import print_function
-    >>> from collections import OrderedDict
-
-    >>> def bprint(s):
-    ...     if not isinstance(s, str):
-    ...         s = s.decode()
-    ...     print(s)
-
-    Example without namespace:
-
-    >>> s = BytesIO()
-    >>> with StreamingXMLWriter(s) as writer:
-    ...    with writer.element("root"):
-    ...        with writer.element("e", {'a': '1'}):
-    ...            writer.characters("content")
-    ...        with writer.element("e"):
-    ...            pass
-    ...        writer.processing_instruction("target", "data")
-    >>> bprint(s.getvalue())
-    <?xml version="1.0" encoding="utf-8"?>
-    <root><e a="1">content</e><e></e><?target data?></root>
-
-    Example with namespaces:
-
-    >>> s = BytesIO()
-    >>> with StreamingXMLWriter(s) as writer:
-    ...    writer.start_namespace("myns", "http://mynamespace.org/")
-    ...    with writer.element("myns:root"):
-    ...        writer.characters("\\n")
-    ...        with writer.element("myns:e", {'a': '1'}):
-    ...            writer.characters("content")
-    ...        with writer.element("myns:e"):
-    ...            pass
-    >>> bprint(s.getvalue())
-    <?xml version="1.0" encoding="utf-8"?>
-    <myns:root xmlns:myns="http://mynamespace.org/">
-    <myns:e a="1">content</myns:e><myns:e></myns:e></myns:root>
-
-    Example with default namespace (prefix=None):
-
-    >>> s = BytesIO()
-    >>> with StreamingXMLWriter(s) as writer:
-    ...     writer.start_namespace(None, "http://mynamespace.org/")
-    ...     with writer.element("root"):
-    ...         with writer.element("e", {"a": "1"}):
-    ...             pass
-    >>> bprint(s.getvalue())
-    <?xml version="1.0" encoding="utf-8"?>
-    <root xmlns="http://mynamespace.org/"><e a="1"></e></root>
-
-    Example with explicit closing (more verbose but could be useful too):
-
-    >>> s = BytesIO()
-    >>> writer = StreamingXMLWriter(s)
-    >>> writer.start_element("root")
-    >>> writer.start_element("e", OrderedDict([('a', '1'), ('b', '2')]))
-    >>> writer.characters("content")
-    >>> writer.end_element("e")
-    >>> writer.start_element("e")
-    >>> writer.end_element("e")
-    >>> writer.end_element("root")
-    >>> bprint(s.getvalue())
-    <?xml version="1.0" encoding="utf-8"?>
-    <root><e a="1" b="2">content</e><e></e></root>
-
-    Text element:
-
-    >>> s = BytesIO()
-    >>> writer = StreamingXMLWriter(s)
-    >>> writer.text_element('root', {'a': '1'}, 'contenté')
-    >>> bprint(s.getvalue())
-    <?xml version="1.0" encoding="utf-8"?>
-    <root a="1">contenté</root>
-
-    Comment:
-    >>> s = BytesIO()
-    >>> writer = StreamingXMLWriter(s)
-    >>> with writer.element("root"):
-    ...     writer.comment("commenté")
-    >>> bprint(s.getvalue())
-    <?xml version="1.0" encoding="utf-8"?>
-    <root><!--commenté--></root>
-    """
-
-    def __init__(self, f, encoding='utf-8'):
+    def __init__(self, generator):
         self._ns = {}  # prefix: uri
-        self._g = MyXMLGenerator(f, encoding)
+        self._g = generator
         self._g.startDocument()
 
     def close(self):
@@ -205,7 +224,7 @@ class StreamingXMLWriter(object):
     def characters(self, content):
         self._g.characters(content)
 
-    def text_element(self, qname, attrs={}, content=None):
+    def text_element(self, qname, content=None, attrs={}):
         with self.element(qname, attrs):
             if content:
                 self.characters(content)
@@ -215,6 +234,15 @@ class StreamingXMLWriter(object):
 
     def comment(self, comment):
         self._g.comment(comment)
+
+
+def from_stream(stream, encoding='utf-8'):
+    generator = _LexicalXMLGenerator(stream, encoding)
+    return _StreamingXMLWriter(generator)
+
+
+def from_sax_handler(handler):
+    return _StreamingXMLWriter(handler)
 
 
 if __name__ == '__main__':

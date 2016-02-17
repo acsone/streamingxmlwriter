@@ -17,10 +17,10 @@ A lightweight pythonic standard compliant streaming xml writer.
 
     from io import BytesIO
 
-    from streamingxmlwriter import StreamingXMLWriter
+    import streamingxmlwriter
 
     stream = BytesIO()
-    with StreamingXMLWriter(stream) as writer:
+    with streamingxmlwriter.from_stream(stream) as writer:
         writer.start_namespace('myns', 'http://mynamespace.org/')
         with writer.element('myns:root', {'att1': '1'}):
             with writer.element('myns:child1'):
@@ -29,10 +29,14 @@ A lightweight pythonic standard compliant streaming xml writer.
             with writer.element('myns:child2'):
                 writer.characters('text content')
             # shortcut for elements containing a single text node
-            writer.text_element('myns:child3', {'att2': '2'}, 'text content')
+            writer.text_element('myns:child3', 'text content', {'att2': '2'})
 
 For more API examples, look at the documentation of the
 ``StreamingXMLWriter`` class in ``core.py``.
+
+Under the hood it generates SAX events to the standard xml.sax.saxutils.XMLGenerator.
+It also provides a `from_sax_handler` constructor so it can also be used to emit
+sax events for other purposes than outputing to an io stream.
 
 Python 2 (2.7+) and python 3 (3.3+) are supported.
 
